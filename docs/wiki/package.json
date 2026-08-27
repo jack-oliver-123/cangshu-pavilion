@@ -1,0 +1,17 @@
+{
+  "name": "@cangshu-pavilion/wiki",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "docs:link": "node scripts/ensure-openspec-link.mjs",
+    "docs:dev": "vitepress dev .",
+    "docs:build": "vitepress build .",
+    "docs:preview": "vitepress preview ."
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
