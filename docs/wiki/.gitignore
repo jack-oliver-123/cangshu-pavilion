@@ -1,0 +1,4 @@
+/node_modules/
+/openspec
+/.vitepress/cache/
+/.vitepress/dist/

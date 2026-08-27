@@ -1,0 +1,86 @@
+name: cangshu-pavilion
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: cangshu
+      POSTGRES_USER: cangshu
+      POSTGRES_PASSWORD: cangshu
+    ports:
+      - "127.0.0.1:${CANGSHU_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cangshu -d cangshu"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: .
+    command: ["pnpm", "--filter", "@cangshu/infrastructure", "db:migrate"]
+    environment:
+      DATABASE_URL: postgres://cangshu:cangshu@db:5432/cangshu
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  server:
+    build: .
+    environment:
+      DATABASE_URL: postgres://cangshu:cangshu@db:5432/cangshu
+      CANGSHU_HOST: 0.0.0.0
+      CANGSHU_PORT: 4100
+      CANGSHU_DATA_DIR: /app/data
+      CANGSHU_SHARED_PASSWORD: ${CANGSHU_SHARED_PASSWORD:?Set CANGSHU_SHARED_PASSWORD to at least 12 characters}
+      CANGSHU_MASTER_KEY: ${CANGSHU_MASTER_KEY:-}
+      CANGSHU_CHAT_BASE_URL: ${CANGSHU_CHAT_BASE_URL:-https://api.openai.com/v1}
+      CANGSHU_CHAT_MODEL: ${CANGSHU_CHAT_MODEL:-}
+      CANGSHU_CHAT_API_KEY: ${CANGSHU_CHAT_API_KEY:-}
+      CANGSHU_EMBEDDING_BASE_URL: ${CANGSHU_EMBEDDING_BASE_URL:-https://api.openai.com/v1}
+      CANGSHU_EMBEDDING_MODEL: ${CANGSHU_EMBEDDING_MODEL:-}
+      CANGSHU_EMBEDDING_API_KEY: ${CANGSHU_EMBEDDING_API_KEY:-}
+    ports:
+      - "127.0.0.1:${CANGSHU_PORT:-4100}:4100"
+    volumes:
+      - application-data:/app/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4100/api/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  worker:
+    build: .
+    command: ["pnpm", "--filter", "@cangshu/worker", "start"]
+    environment:
+      DATABASE_URL: postgres://cangshu:cangshu@db:5432/cangshu
+      CANGSHU_DATA_DIR: /app/data
+      CANGSHU_MASTER_KEY: ${CANGSHU_MASTER_KEY:-}
+      CANGSHU_CHAT_BASE_URL: ${CANGSHU_CHAT_BASE_URL:-https://api.openai.com/v1}
+      CANGSHU_CHAT_MODEL: ${CANGSHU_CHAT_MODEL:-}
+      CANGSHU_CHAT_API_KEY: ${CANGSHU_CHAT_API_KEY:-}
+      CANGSHU_EMBEDDING_BASE_URL: ${CANGSHU_EMBEDDING_BASE_URL:-https://api.openai.com/v1}
+      CANGSHU_EMBEDDING_MODEL: ${CANGSHU_EMBEDDING_MODEL:-}
+      CANGSHU_EMBEDDING_API_KEY: ${CANGSHU_EMBEDDING_API_KEY:-}
+    volumes:
+      - application-data:/app/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
+  application-data:

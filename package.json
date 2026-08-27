@@ -1,0 +1,27 @@
+{
+  "name": "cangshu-pavilion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "pnpm --filter @cangshu/web build",
+    "dev:server": "pnpm --filter @cangshu/server dev",
+    "dev:web": "pnpm --filter @cangshu/web dev",
+    "dev:worker": "pnpm --filter @cangshu/worker dev",
+    "format": "biome check --write .",
+    "lint": "biome check .",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.10",
+    "@types/node": "26.4.0",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  }
+}
